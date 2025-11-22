@@ -454,7 +454,17 @@ export default function OrderPanel() {
 
   const handlePrintOrder = (order: Order) => {
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    const isAndroid = /Android/i.test(navigator.userAgent);
+    
+    // Abre em nova aba para garantir compatibilidade com mobile
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      toast({
+        variant: "destructive",
+        title: "Erro ao imprimir",
+        description: "Não foi possível abrir a janela de impressão. Verifique se o bloqueador de pop-ups está desativado.",
+      });
+      return;
+    }
 
     const customerName = order.customers?.name || order.customer_name || 'Cliente Anônimo';
     const customerPhone = order.customers?.phone || 'N/A';
@@ -480,14 +490,22 @@ export default function OrderPanel() {
       <!DOCTYPE html>
       <html>
         <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <title>Pedido #${order.order_number}</title>
           <style>
+            * {
+              margin: 0;
+              padding: 0;
+              box-sizing: border-box;
+            }
             body {
               font-family: 'Courier New', monospace;
               max-width: 300px;
               margin: 20px auto;
               padding: 0;
               font-size: 12px;
+              text-transform: uppercase;
             }
             .header {
               text-align: center;
@@ -510,6 +528,7 @@ export default function OrderPanel() {
               margin-top: 5px;
               font-size: 13px;
               opacity: 0.95;
+              font-weight: bold;
             }
             .content {
               padding: 10px;
@@ -568,12 +587,12 @@ export default function OrderPanel() {
         <body>
           <div class="header">
             <h1>${customerName.toUpperCase()}</h1>
-            ${reservationDateTime ? `<div class="datetime">${reservationDateTime}</div>` : ''}
+            ${reservationDateTime ? `<div class="datetime">${reservationDateTime.toUpperCase()}</div>` : ''}
           </div>
 
           <div class="content">
             <div class="order-info">
-              <div>Pedido #${order.order_number}</div>
+              <div>PEDIDO #${order.order_number}</div>
               ${customerPhone !== 'N/A' ? `<div>Nº: ${customerPhone}</div>` : ''}
               <div>${orderDate}</div>
             </div>
@@ -582,8 +601,8 @@ export default function OrderPanel() {
               <div class="divider"></div>
               <div class="section">
                 <div class="section-title">ENTREGA</div>
-                <div>${order.delivery_address}, ${order.delivery_number}</div>
-                ${order.delivery_reference ? `<div>Ref: ${order.delivery_reference}</div>` : ''}
+                <div>${order.delivery_address ? order.delivery_address.toUpperCase() : ''}, ${order.delivery_number || ''}</div>
+                ${order.delivery_reference ? `<div>REF: ${order.delivery_reference.toUpperCase()}</div>` : ''}
               </div>
             ` : ''}
 
@@ -591,7 +610,7 @@ export default function OrderPanel() {
               <div class="divider"></div>
               <div class="section">
                 <div class="section-title">RETIRADA</div>
-                <div>Horário: ${order.pickup_time}</div>
+                <div>HORÁRIO: ${order.pickup_time.toUpperCase()}</div>
               </div>
             ` : ''}
 
@@ -599,7 +618,7 @@ export default function OrderPanel() {
               <div class="divider"></div>
               <div class="section">
                 <div class="section-title">RESERVA</div>
-                <div>Data: ${parseDateString(order.reservation_date)}</div>
+                <div>DATA: ${parseDateString(order.reservation_date)}</div>
               </div>
             ` : ''}
 
@@ -611,7 +630,7 @@ export default function OrderPanel() {
       const isRedeemed = item.product_price === 0 && item.subtotal === 0;
       return `
                   <div class="item">
-                    <span>${item.quantity}x ${item.product_name}${item.variation_name ? ` (${item.variation_name})` : ''}${isRedeemed ? ' ⭐' : ''}</span>
+                    <span>${item.quantity}X ${item.product_name.toUpperCase()}${item.variation_name ? ` (${item.variation_name.toUpperCase()})` : ''}${isRedeemed ? ' ⭐' : ''}</span>
                     <span>${isRedeemed ? 'RESGATADO' : `R$ ${item.subtotal.toFixed(2)}`}</span>
                   </div>
                 `;
@@ -623,13 +642,13 @@ export default function OrderPanel() {
             ${order.notes ? `
               <div class="section">
                 <div class="section-title">OBSERVAÇÃO</div>
-                <div>${order.notes}</div>
+                <div>${order.notes.toUpperCase()}</div>
               </div>
               <div class="divider"></div>
             ` : ''}
 
             <div class="section">
-              <div><strong>Pagamento:</strong> ${order.payment_method}</div>
+              <div><strong>PAGAMENTO:</strong> ${order.payment_method.toUpperCase()}</div>
             </div>
 
             <div class="total">
@@ -637,7 +656,7 @@ export default function OrderPanel() {
             </div>
 
             <div class="footer">
-              Obrigado pela preferência!
+              OBRIGADO PELA PREFERÊNCIA!
             </div>
           </div>
 
@@ -659,42 +678,8 @@ export default function OrderPanel() {
       </html>
     `;
 
-    if (isMobile || isAndroid) {
-      const iframe = document.createElement('iframe');
-      iframe.style.position = 'fixed';
-      iframe.style.right = '0';
-      iframe.style.bottom = '0';
-      iframe.style.width = '0';
-      iframe.style.height = '0';
-      iframe.style.border = '0';
-      document.body.appendChild(iframe);
-
-      const iframeDoc = iframe.contentWindow?.document;
-      if (iframeDoc) {
-        iframeDoc.open();
-        iframeDoc.write(printContent);
-        iframeDoc.close();
-
-        setTimeout(() => {
-          iframe.contentWindow?.print();
-          setTimeout(() => {
-            document.body.removeChild(iframe);
-          }, 100);
-        }, 500);
-      }
-    } else {
-      const printWindow = window.open('', '_blank');
-      if (!printWindow) {
-        toast({
-          variant: "destructive",
-          title: "Erro ao imprimir",
-          description: "Não foi possível abrir a janela de impressão. Verifique se o bloqueador de pop-ups está desativado.",
-        });
-        return;
-      }
-      printWindow.document.write(printContent);
-      printWindow.document.close();
-    }
+    printWindow.document.write(printContent);
+    printWindow.document.close();
   };
 
   const getStatusBadge = (status: Enums<'order_status'>) => {

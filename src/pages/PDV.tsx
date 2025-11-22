@@ -754,7 +754,9 @@ export default function PDV() {
       return;
     }
 
-    const printWindow = window.open('', '_blank');
+    // Detecta se é dispositivo mobile para abrir em nova página
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const printWindow = window.open('', isMobile ? '_blank' : '_blank');
     if (!printWindow) {
       toast({
         variant: "destructive",
@@ -784,14 +786,22 @@ export default function PDV() {
       <!DOCTYPE html>
       <html>
         <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <title>Pedido #${orderNumber}</title>
           <style>
+            * {
+              margin: 0;
+              padding: 0;
+              box-sizing: border-box;
+            }
             body {
               font-family: 'Courier New', monospace;
               max-width: 300px;
               margin: 20px auto;
               padding: 0;
               font-size: 12px;
+              text-transform: uppercase;
             }
             .header {
               text-align: center;
@@ -814,6 +824,7 @@ export default function PDV() {
               margin-top: 5px;
               font-size: 13px;
               opacity: 0.95;
+              font-weight: bold;
             }
             .content {
               padding: 10px;
@@ -872,12 +883,12 @@ export default function PDV() {
         <body>
           <div class="header">
             <h1>${customerNameForOrder.toUpperCase()}</h1>
-            ${reservationDateTime ? `<div class="datetime">${reservationDateTime}</div>` : ''}
+            ${reservationDateTime ? `<div class="datetime">${reservationDateTime.toUpperCase()}</div>` : ''}
           </div>
 
           <div class="content">
             <div class="order-info">
-              <div>Pedido #${orderNumber}</div>
+              <div>PEDIDO #${orderNumber}</div>
               ${customerPhone !== 'N/A' ? `<div>Nº: ${customerPhone}</div>` : ''}
               <div>${orderDate}</div>
             </div>
@@ -886,9 +897,9 @@ export default function PDV() {
               <div class="divider"></div>
               <div class="section">
                 <div class="section-title">ENTREGA</div>
-                <div>${address}, ${number}</div>
-                ${neighborhood ? `<div>${neighborhood}</div>` : ''}
-                ${reference ? `<div>Ref: ${reference}</div>` : ''}
+                <div>${address.toUpperCase()}, ${number}</div>
+                ${neighborhood ? `<div>${neighborhood.toUpperCase()}</div>` : ''}
+                ${reference ? `<div>REF: ${reference.toUpperCase()}</div>` : ''}
                 ${cep && !skipCep ? `<div>CEP: ${cep}</div>` : ''}
               </div>
             ` : ''}
@@ -901,7 +912,7 @@ export default function PDV() {
       const isRedeemed = item.isRedeemedWithPoints;
       return `
                   <div class="item">
-                    <span>${item.quantity}x ${item.name}${item.selectedVariation ? ` (${item.selectedVariation.name})` : ''}${isRedeemed ? ' ⭐' : ''}</span>
+                    <span>${item.quantity}X ${item.name.toUpperCase()}${item.selectedVariation ? ` (${item.selectedVariation.name.toUpperCase()})` : ''}${isRedeemed ? ' ⭐' : ''}</span>
                     <span>${isRedeemed ? 'RESGATADO' : `R$ ${(item.price * item.quantity).toFixed(2)}`}</span>
                   </div>
                 `;
@@ -911,7 +922,7 @@ export default function PDV() {
             ${isDelivery && deliveryAmount > 0 ? `
               <div class="divider"></div>
               <div class="section">
-                <div>Taxa de Entrega: R$ ${deliveryAmount.toFixed(2)}</div>
+                <div>TAXA DE ENTREGA: R$ ${deliveryAmount.toFixed(2)}</div>
               </div>
             ` : ''}
 
@@ -920,28 +931,28 @@ export default function PDV() {
             ${notes ? `
               <div class="section">
                 <div class="section-title">OBSERVAÇÃO</div>
-                <div>${notes}</div>
+                <div>${notes.toUpperCase()}</div>
               </div>
               <div class="divider"></div>
             ` : ''}
 
             <div class="section">
-              <div><strong>Pagamento:</strong> ${paymentMethod?.charAt(0).toUpperCase() + paymentMethod?.slice(1)}</div>
-              ${paymentMethod === "dinheiro" && changeFor ? `<div><strong>Troco para:</strong> R$ ${parseFloat(changeFor).toFixed(2)}</div>` : ''}
+              <div><strong>PAGAMENTO:</strong> ${paymentMethod?.toUpperCase()}</div>
+              ${paymentMethod === "dinheiro" && changeFor ? `<div><strong>TROCO PARA:</strong> R$ ${parseFloat(changeFor).toFixed(2)}</div>` : ''}
             </div>
 
-            <div className="total">
+            <div class="total">
               TOTAL: R$ ${totalMonetary.toFixed(2)}
             </div>
 
             ${pointsToRedeem > 0 ? `
-              <div className="total">
-                PONTOS RESGATADOS: ${pointsToRedeem} pts
+              <div class="total">
+                PONTOS RESGATADOS: ${pointsToRedeem} PTS
               </div>
             ` : ''}
 
-            <div className="footer">
-              Obrigado pela preferência!
+            <div class="footer">
+              OBRIGADO PELA PREFERÊNCIA!
             </div>
           </div>
 
