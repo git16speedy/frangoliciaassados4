@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Store, Link as LinkIcon, Settings as SettingsIcon, Bell, MessageSquare } from "lucide-react";
+import { Store, Link as LinkIcon, Settings as SettingsIcon, Bell, MessageSquare, Copy, Check } from "lucide-react";
 import { supabase as sb } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -38,6 +38,8 @@ export default function MyStore() {
   const [whatsappAiApiKey, setWhatsappAiApiKey] = useState("");
   const [loading, setLoading] = useState(true);
   const [showStoreSettingsDialog, setShowStoreSettingsDialog] = useState(false);
+  const [copiedStoreUrl, setCopiedStoreUrl] = useState(false);
+  const [copiedMonitorUrl, setCopiedMonitorUrl] = useState(false);
   const { profile, isAdmin } = useAuth();
   const { toast } = useToast();
 
@@ -142,6 +144,37 @@ export default function MyStore() {
       return `${baseUrl}/loja/${slug}`;
     }
     return `${baseUrl}/loja`;
+  };
+
+  const getMonitorUrl = () => {
+    const baseUrl = window.location.origin;
+    if (slug) {
+      return `${baseUrl}/monitor/${slug}`;
+    }
+    return `${baseUrl}/monitor`;
+  };
+
+  const copyToClipboard = async (text: string, type: 'store' | 'monitor') => {
+    try {
+      await navigator.clipboard.writeText(text);
+      if (type === 'store') {
+        setCopiedStoreUrl(true);
+        setTimeout(() => setCopiedStoreUrl(false), 2000);
+      } else {
+        setCopiedMonitorUrl(true);
+        setTimeout(() => setCopiedMonitorUrl(false), 2000);
+      }
+      toast({
+        title: "Link copiado!",
+        description: "O link foi copiado para a área de transferência",
+      });
+    } catch (err) {
+      toast({
+        variant: "destructive",
+        title: "Erro ao copiar",
+        description: "Não foi possível copiar o link",
+      });
+    }
   };
 
   if (loading) {
@@ -257,19 +290,68 @@ export default function MyStore() {
             </div>
 
             {slug && (
-              <div className="p-3 bg-accent rounded-lg">
-                <div className="flex items-center gap-2 mb-1">
-                  <LinkIcon className="h-4 w-4 text-primary" />
-                  <p className="text-sm font-medium">URL da sua loja:</p>
+              <div className="space-y-3" data-testid="store-urls-section">
+                <div className="p-3 bg-accent rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <LinkIcon className="h-4 w-4 text-primary" />
+                    <p className="text-sm font-medium">URL da sua loja:</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <a
+                      href={getStoreUrl()}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-primary hover:underline break-all flex-1"
+                      data-testid="store-url-link"
+                    >
+                      {getStoreUrl()}
+                    </a>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => copyToClipboard(getStoreUrl(), 'store')}
+                      className="shrink-0"
+                      data-testid="copy-store-url-button"
+                    >
+                      {copiedStoreUrl ? (
+                        <Check className="h-4 w-4 text-green-600" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
                 </div>
-                <a
-                  href={getStoreUrl()}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-primary hover:underline break-all"
-                >
-                  {getStoreUrl()}
-                </a>
+
+                <div className="p-3 bg-accent rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <LinkIcon className="h-4 w-4 text-primary" />
+                    <p className="text-sm font-medium">URL do monitor:</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <a
+                      href={getMonitorUrl()}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-primary hover:underline break-all flex-1"
+                      data-testid="monitor-url-link"
+                    >
+                      {getMonitorUrl()}
+                    </a>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => copyToClipboard(getMonitorUrl(), 'monitor')}
+                      className="shrink-0"
+                      data-testid="copy-monitor-url-button"
+                    >
+                      {copiedMonitorUrl ? (
+                        <Check className="h-4 w-4 text-green-600" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
               </div>
             )}
           </CardContent>
